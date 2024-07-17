@@ -1,0 +1,57 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <ctype.h>
+
+// Function to calculate the GCD of two numbers
+int gcd(int a, int b) {
+    while (b != 0) {
+        int temp = b;
+        b = a % b;
+        a = temp;
+    }
+    return a;
+}
+
+// Function to check if a is valid (coprime with 26)
+int isValidA(int a) {
+    return gcd(a, 26) == 1;
+}
+
+// Function to encrypt the plaintext using the affine Caesar cipher
+char affineEncrypt(char p, int a, int b) {
+    if (isalpha(p)) {
+        char offset = isupper(p) ? 'A' : 'a';
+        return ((a * (p - offset) + b) % 26) + offset;
+    }
+    return p; // Non-alphabet characters remain unchanged
+}
+
+int main() {
+    char plaintext[256];
+    int a, b;
+
+    // Input plaintext
+    printf("Enter the plaintext: ");
+    fgets(plaintext, sizeof(plaintext), stdin);
+
+    // Input values of a and b
+    printf("Enter the value of a: ");
+    scanf("%d", &a);
+    if (!isValidA(a)) {
+        printf("Invalid value of a. It must be coprime with 26.\n");
+        return 1;
+    }
+
+    printf("Enter the value of b: ");
+    scanf("%d", &b);
+    b = b % 26; // Ensure b is within the range 0 to 25
+
+    // Encrypt the plaintext
+    printf("Ciphertext: ");
+    for (int i = 0; plaintext[i] != '\0'; i++) {
+        printf("%c", affineEncrypt(plaintext[i], a, b));
+    }
+    printf("\n");
+
+    return 0;
+}
