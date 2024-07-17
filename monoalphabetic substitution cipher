@@ -1,0 +1,73 @@
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+
+#define ALPHABET_SIZE 26
+
+void encrypt(char plaintext[], char ciphertext[], char key[]);
+void decrypt(char ciphertext[], char plaintext[], char key[]);
+
+int main() {
+    char plaintext[100];
+    char encrypted[100];
+    char decrypted[100];
+    
+    // Example substitution key (must be a permutation of the alphabet)
+    char key[ALPHABET_SIZE + 1] = "QWERTYUIOPASDFGHJKLZXCVBNM"; // Your substitution key here
+
+    printf("Enter the plaintext: ");
+    fgets(plaintext, sizeof(plaintext), stdin);
+    
+    // Remove newline character from plaintext input
+    plaintext[strcspn(plaintext, "\n")] = 0;
+
+    encrypt(plaintext, encrypted, key);
+    printf("Encrypted text: %s\n", encrypted);
+
+    decrypt(encrypted, decrypted, key);
+    printf("Decrypted text: %s\n", decrypted);
+
+    return 0;
+}
+
+void encrypt(char plaintext[], char ciphertext[], char key[]) {
+    int i;
+    for (i = 0; plaintext[i] != '\0'; i++) {
+        if (isalpha(plaintext[i])) {
+            if (isupper(plaintext[i])) {
+                ciphertext[i] = key[plaintext[i] - 'A'];
+            } else {
+                ciphertext[i] = tolower(key[plaintext[i] - 'a']);
+            }
+        } else {
+            ciphertext[i] = plaintext[i];
+        }
+    }
+    ciphertext[i] = '\0';
+}
+
+void decrypt(char ciphertext[], char plaintext[], char key[]) {
+    int i, j;
+    for (i = 0; ciphertext[i] != '\0'; i++) {
+        if (isalpha(ciphertext[i])) {
+            if (isupper(ciphertext[i])) {
+                for (j = 0; j < ALPHABET_SIZE; j++) {
+                    if (key[j] == ciphertext[i]) {
+                        plaintext[i] = 'A' + j;
+                        break;
+                    }
+                }
+            } else {
+                for (j = 0; j < ALPHABET_SIZE; j++) {
+                    if (tolower(key[j]) == ciphertext[i]) {
+                        plaintext[i] = 'a' + j;
+                        break;
+                    }
+                }
+            }
+        } else {
+            plaintext[i] = ciphertext[i];
+        }
+    }
+    plaintext[i] = '\0';
+}
