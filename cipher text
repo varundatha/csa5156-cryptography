@@ -1,0 +1,81 @@
+#include <stdio.h>
+
+int modInverse(int a, int m) {
+    a = a % m;
+    for (int x = 1; x < m; x++) {
+        if ((a * x) % m == 1) {
+            return x;
+        }
+    }
+    return -1; // No modular inverse if return -1
+}
+
+int mod(int a, int m) {
+    return (a % m + m) % m;
+}
+
+void breakAffineCipher(char *ciphertext) {
+    int freq[26] = {0};
+    char *ptr = ciphertext;
+    
+    // Calculate frequency of each letter in ciphertext
+    while (*ptr) {
+        if (*ptr >= 'A' && *ptr <= 'Z') {
+            freq[*ptr - 'A']++;
+        }
+        ptr++;
+    }
+
+    // Find the most frequent and second most frequent letters
+    int max1 = 0, max2 = 0, idx1 = -1, idx2 = -1;
+    for (int i = 0; i < 26; i++) {
+        if (freq[i] > max1) {
+            max2 = max1;
+            idx2 = idx1;
+            max1 = freq[i];
+            idx1 = i;
+        } else if (freq[i] > max2) {
+            max2 = freq[i];
+            idx2 = i;
+        }
+    }
+
+    int E = 4, T = 19;  // Positions of 'E' and 'T'
+    int B = idx1, U = idx2;  // Positions of 'B' and 'U'
+
+    int a_inv = modInverse(15, 26);
+    if (a_inv == -1) {
+        printf("No modular inverse found for 15 mod 26.\n");
+        return;
+    }
+
+    int a = mod(19 * a_inv, 26);
+    int b = mod(B - 4 * a, 26);
+
+    printf("Found keys: a = %d, b = %d\n", a, b);
+
+    // Decrypt the ciphertext
+    char decrypted[strlen(ciphertext) + 1];
+    ptr = ciphertext;
+    int i = 0;
+
+    while (*ptr) {
+        if (*ptr >= 'A' && *ptr <= 'Z') {
+            int pos = *ptr - 'A';
+            decrypted[i] = 'A' + mod((modInverse(a, 26) * (pos - b)), 26);
+        } else {
+            decrypted[i] = *ptr;
+        }
+        ptr++;
+        i++;
+    }
+    decrypted[i] = '\0';
+
+    printf("Decrypted text: %s\n", decrypted);
+}
+
+int main() {
+    char ciphertext[] = "BZUPP..."; // Replace with the actual ciphertext
+    breakAffineCipher(ciphertext);
+    return 0;
+}
