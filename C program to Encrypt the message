@@ -1,0 +1,53 @@
+#include <stdio.h>
+
+int main() {
+    char plaintext[100], ciphertext[100];
+    int i, j, k, len;
+
+    // Key matrix
+    int key[2][2] = {{9, 4}, {5, 7}};
+    int inv_key[2][2] = {{3, 19}, {21, 15}};
+
+    // Get plaintext
+    printf("Enter plaintext: ");
+    scanf("%s", plaintext);
+
+    len = strlen(plaintext);
+
+    // Handle odd length plaintext
+    if (len % 2 != 0) {
+        plaintext[len] = 'x';
+        plaintext[len + 1] = '\0';
+        len++;
+    }
+
+    // Encryption
+    for (i = 0; i < len; i += 2) {
+        int p1 = plaintext[i] - 'a';
+        int p2 = plaintext[i + 1] - 'a';
+
+        int c1 = (key[0][0] * p1 + key[0][1] * p2) % 26;
+        int c2 = (key[1][0] * p1 + key[1][1] * p2) % 26;
+
+        ciphertext[i] = c1 + 'a';
+        ciphertext[i + 1] = c2 + 'a';
+    }
+
+    printf("Ciphertext: %s\n", ciphertext);
+
+    // Decryption
+    for (i = 0; i < len; i += 2) {
+        int c1 = ciphertext[i] - 'a';
+        int c2 = ciphertext[i + 1] - 'a';
+
+        int p1 = (inv_key[0][0] * c1 + inv_key[0][1] * c2) % 26;
+        int p2 = (inv_key[1][0] * c1 + inv_key[1][1] * c2) % 26;
+
+        plaintext[i] = p1 + 'a';
+        plaintext[i + 1] = p2 + 'a';
+    }
+
+    printf("Decrypted plaintext: %s\n", plaintext);
+
+    return 0;
+}
