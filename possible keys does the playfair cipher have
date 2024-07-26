@@ -1,0 +1,15 @@
+#include <stdio.h>
+#include <math.h>
+
+int main() {
+    // Approximate power of 2 for 25!
+    double log2_25_fact = 36.65;
+
+    // Approximate power of 2 for effectively unique keys
+    double log2_unique_keys = 22.83;
+
+    printf("Approximate power of 2 for the total number of possible keys: 2^%.2f\n", log2_25_fact);
+    printf("Approximate power of 2 for the number of effectively unique keys: 2^%.2f\n", log2_unique_keys);
+
+    return 0;
+}
