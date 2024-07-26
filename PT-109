@@ -1,0 +1,87 @@
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+
+// Function to generate the Playfair matrix
+void generatePlayfairMatrix(char *key, char matrix[5][5]) {
+    int alphabet[26] = {0};
+    int i, j = 0, k = 0;
+
+    // Process the key
+    for (i = 0; i < strlen(key); i++) {
+        if (key[i] == 'J') key[i] = 'I';  // Treat 'J' as 'I'
+        if (!alphabet[key[i] - 'A']) {
+            matrix[j / 5][j % 5] = key[i];
+            alphabet[key[i] - 'A'] = 1;
+            j++;
+        }
+    }
+
+    // Process the remaining letters
+    for (i = 0; i < 26; i++) {
+        if (i + 'A' == 'J') continue;  // Skip 'J'
+        if (!alphabet[i]) {
+            matrix[j / 5][j % 5] = i + 'A';
+            j++;
+        }
+    }
+}
+
+// Function to find the position of a character in the Playfair matrix
+void findPosition(char matrix[5][5], char ch, int *row, int *col) {
+    int i, j;
+    if (ch == 'J') ch = 'I';  // Treat 'J' as 'I'
+    for (i = 0; i < 5; i++) {
+        for (j = 0; j < 5; j++) {
+            if (matrix[i][j] == ch) {
+                *row = i;
+                *col = j;
+                return;
+            }
+        }
+    }
+}
+
+// Function to decrypt the Playfair cipher
+void decryptPlayfair(char *ciphertext, char *plaintext, char matrix[5][5]) {
+    int len = strlen(ciphertext);
+    int row1, col1, row2, col2;
+    for (int i = 0; i < len; i += 2) {
+        findPosition(matrix, ciphertext[i], &row1, &col1);
+        findPosition(matrix, ciphertext[i+1], &row2, &col2);
+        if (row1 == row2) {
+            plaintext[i] = matrix[row1][(col1 + 4) % 5];
+            plaintext[i+1] = matrix[row2][(col2 + 4) % 5];
+        } else if (col1 == col2) {
+            plaintext[i] = matrix[(row1 + 4) % 5][col1];
+            plaintext[i+1] = matrix[(row2 + 4) % 5][col2];
+        } else {
+            plaintext[i] = matrix[row1][col2];
+            plaintext[i+1] = matrix[row2][col1];
+        }
+    }
+    plaintext[len] = '\0';
+}
+
+int main() {
+    char key[] = "KEYWORD";  // Example keyword
+    char matrix[5][5];
+    char ciphertext[] = "KXJEYUREBEZWEHEWRYTUHEYFSKREHEGOYFIWTTTUOLKSYCAJPOBOTEIZONTXBYBNTGONEYCUZWRGDSONSXBOUYWRHEBAAHYUSEDQ";
+    char plaintext[100];
+
+    generatePlayfairMatrix(key, matrix);
+
+    printf("Playfair matrix:\n");
+    for (int i = 0; i < 5; i++) {
+        for (int j = 0; j < 5; j++) {
+            printf("%c ", matrix[i][j]);
+        }
+        printf("\n");
+    }
+
+    decryptPlayfair(ciphertext, plaintext, matrix);
+
+    printf("Decrypted message: %s\n", plaintext);
+
+    return 0;
+}
