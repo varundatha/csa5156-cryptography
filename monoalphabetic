@@ -1,0 +1,84 @@
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+
+void generateCipherSequence(char *keyword, char *cipher) {
+    int alphabet[26] = {0};
+    int i, j = 0;
+
+    // Fill cipher sequence with keyword characters, avoiding duplicates
+    for (i = 0; i < strlen(keyword); i++) {
+        if (!alphabet[toupper(keyword[i]) - 'A']) {
+            cipher[j++] = toupper(keyword[i]);
+            alphabet[toupper(keyword[i]) - 'A'] = 1;
+        }
+    }
+
+    // Fill remaining alphabet characters
+    for (i = 0; i < 26; i++) {
+        if (!alphabet[i]) {
+            cipher[j++] = 'A' + i;
+        }
+    }
+    cipher[j] = '\0'; // Null-terminate the cipher sequence
+}
+
+void encrypt(char *plaintext, char *ciphertext, char *cipher) {
+    int i;
+    for (i = 0; i < strlen(plaintext); i++) {
+        if (isalpha(plaintext[i])) {
+            if (islower(plaintext[i])) {
+                ciphertext[i] = tolower(cipher[plaintext[i] - 'a']);
+            } else {
+                ciphertext[i] = cipher[plaintext[i] - 'A'];
+            }
+        } else {
+            ciphertext[i] = plaintext[i];
+        }
+    }
+    ciphertext[i] = '\0'; // Null-terminate the ciphertext
+}
+
+void decrypt(char *ciphertext, char *plaintext, char *cipher) {
+    int i, j;
+    for (i = 0; i < strlen(ciphertext); i++) {
+        if (isalpha(ciphertext[i])) {
+            for (j = 0; j < 26; j++) {
+                if (toupper(ciphertext[i]) == cipher[j]) {
+                    if (islower(ciphertext[i])) {
+                        plaintext[i] = tolower('A' + j);
+                    } else {
+                        plaintext[i] = 'A' + j;
+                    }
+                    break;
+                }
+            }
+        } else {
+            plaintext[i] = ciphertext[i];
+        }
+    }
+    plaintext[i] = '\0'; // Null-terminate the plaintext
+}
+
+int main() {
+    char keyword[] = "CIPHER";
+    char cipher[27]; // 26 letters + 1 for null-terminator
+    char plaintext[100], ciphertext[100];
+
+    generateCipherSequence(keyword, cipher);
+
+    printf("Cipher sequence: %s\n", cipher);
+
+    printf("Enter plaintext: ");
+    fgets(plaintext, sizeof(plaintext), stdin);
+    plaintext[strcspn(plaintext, "\n")] = '\0'; // Remove newline character
+
+    encrypt(plaintext, ciphertext, cipher);
+    printf("Ciphertext: %s\n", ciphertext);
+
+    char decryptedtext[100];
+    decrypt(ciphertext, decryptedtext, cipher);
+    printf("Decrypted text: %s\n", decryptedtext);
+
+    return 0;
+}
