@@ -1,0 +1,126 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define ALPHABET_SIZE 26
+#define MAX_TEXT_SIZE 1000
+
+// Frequency of letters in English language in descending order
+const char english_freq_order[] = "etaoinshrdlcumwfgypbvkjxqz";
+
+// Function prototypes
+void analyze_frequency(char *text, int *freq);
+void sort_by_frequency(int *freq, char *letters);
+void decrypt_with_key(char *ciphertext, char *key, char *plaintext);
+void generate_key_from_freq(char *ciphertext, char *key);
+void top_n_plaintexts(char *ciphertext, int n);
+
+int main() {
+    char ciphertext[MAX_TEXT_SIZE];
+    int topN;
+
+    // Get user input
+    printf("Enter the ciphertext: ");
+    fgets(ciphertext, MAX_TEXT_SIZE, stdin);
+    ciphertext[strcspn(ciphertext, "\n")] = '\0'; // Remove newline character
+
+    printf("Enter the number of top possible plaintexts to display: ");
+    scanf("%d", &topN);
+
+    top_n_plaintexts(ciphertext, topN);
+
+    return 0;
+}
+
+// Function to analyze the frequency of letters in a text
+void analyze_frequency(char *text, int *freq) {
+    for (int i = 0; i < ALPHABET_SIZE; i++) {
+        freq[i] = 0;
+    }
+
+    for (int i = 0; i < strlen(text); i++) {
+        if (text[i] >= 'a' && text[i] <= 'z') {
+            freq[text[i] - 'a']++;
+        }
+    }
+}
+
+// Function to sort letters by frequency in descending order
+void sort_by_frequency(int *freq, char *letters) {
+    int sorted_freq[ALPHABET_SIZE];
+    char sorted_letters[ALPHABET_SIZE];
+
+    for (int i = 0; i < ALPHABET_SIZE; i++) {
+        sorted_freq[i] = freq[i];
+        sorted_letters[i] = 'a' + i;
+    }
+
+    // Simple bubble sort
+    for (int i = 0; i < ALPHABET_SIZE - 1; i++) {
+        for (int j = 0; j < ALPHABET_SIZE - 1 - i; j++) {
+            if (sorted_freq[j] < sorted_freq[j + 1]) {
+                int temp_freq = sorted_freq[j];
+                sorted_freq[j] = sorted_freq[j + 1];
+                sorted_freq[j + 1] = temp_freq;
+
+                char temp_letter = sorted_letters[j];
+                sorted_letters[j] = sorted_letters[j + 1];
+                sorted_letters[j + 1] = temp_letter;
+            }
+        }
+    }
+
+    for (int i = 0; i < ALPHABET_SIZE; i++) {
+        letters[i] = sorted_letters[i];
+    }
+}
+
+// Function to decrypt the ciphertext using a given key
+void decrypt_with_key(char *ciphertext, char *key, char *plaintext) {
+    int len = strlen(ciphertext);
+    for (int i = 0; i < len; i++) {
+        if (ciphertext[i] >= 'a' && ciphertext[i] <= 'z') {
+            plaintext[i] = key[ciphertext[i] - 'a'];
+        } else {
+            plaintext[i] = ciphertext[i]; // Non-alphabet characters remain the same
+        }
+    }
+    plaintext[len] = '\0'; // Null-terminate the string
+}
+
+// Function to generate a key based on frequency analysis
+void generate_key_from_freq(char *ciphertext, char *key) {
+    int freq[ALPHABET_SIZE];
+    char sorted_letters[ALPHABET_SIZE];
+
+    // Analyze frequency of letters in the ciphertext
+    analyze_frequency(ciphertext, freq);
+    
+    // Sort letters by frequency
+    sort_by_frequency(freq, sorted_letters);
+
+    // Create key based on frequency comparison
+    for (int i = 0; i < ALPHABET_SIZE; i++) {
+        key[sorted_letters[i] - 'a'] = english_freq_order[i];
+    }
+}
+
+// Function to display top N possible plaintexts
+void top_n_plaintexts(char *ciphertext, int n) {
+    char key[ALPHABET_SIZE];
+    char plaintext[MAX_TEXT_SIZE];
+
+    generate_key_from_freq(ciphertext, key);
+
+    printf("Top %d possible plaintexts:\n", n);
+    for (int i = 0; i < n && i < ALPHABET_SIZE; i++) {
+        decrypt_with_key(ciphertext, key, plaintext);
+        printf("%2d. Key: %s\n    Plaintext: %s\n", i + 1, key, plaintext);
+        // Rotate the key to generate the next possible plaintext
+        char temp = key[0];
+        for (int j = 0; j < ALPHABET_SIZE - 1; j++) {
+            key[j] = key[j + 1];
+        }
+        key[ALPHABET_SIZE - 1] = temp;
+    }
+}
