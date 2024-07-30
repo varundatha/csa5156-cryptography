@@ -1,0 +1,114 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+#define N 3  // Assuming a 3x3 key matrix for the Hill cipher
+
+// Function prototypes
+void matrix_multiply(int a[N][N], int b[N], int result[N]);
+void find_key_matrix(int plaintext[][N], int ciphertext[][N], int key[N][N]);
+int mod_inverse(int a, int m);
+void matrix_inverse(int a[N][N], int inverse[N][N]);
+int mod(int a, int m);
+
+int main() {
+    // Example known plaintext-ciphertext pairs (3 pairs for a 3x3 matrix)
+    int plaintext[3][N] = {
+        { 7, 8, 11 },
+        { 3, 14, 5 },
+        { 17, 0, 10 }
+    };
+    int ciphertext[3][N] = {
+        { 19, 2, 5 },
+        { 23, 6, 9 },
+        { 4, 15, 16 }
+    };
+
+    int key[N][N];
+
+    // Find the key matrix using the known plaintext-ciphertext pairs
+    find_key_matrix(plaintext, ciphertext, key);
+
+    printf("Recovered key matrix:\n");
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < N; j++) {
+            printf("%d ", key[i][j]);
+        }
+        printf("\n");
+    }
+
+    return 0;
+}
+
+// Function to multiply two matrices
+void matrix_multiply(int a[N][N], int b[N], int result[N]) {
+    for (int i = 0; i < N; i++) {
+        result[i] = 0;
+        for (int j = 0; j < N; j++) {
+            result[i] += a[i][j] * b[j];
+        }
+        result[i] = mod(result[i], 26); // Modulo 26 for the Hill cipher
+    }
+}
+
+// Function to find the key matrix from known plaintext-ciphertext pairs
+void find_key_matrix(int plaintext[][N], int ciphertext[][N], int key[N][N]) {
+    int plaintext_inv[N][N];
+
+    // Find the inverse of the plaintext matrix
+    matrix_inverse(plaintext, plaintext_inv);
+
+    // Multiply the ciphertext matrix with the inverse of the plaintext matrix to get the key
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < N; j++) {
+            key[i][j] = 0;
+            for (int k = 0; k < N; k++) {
+                key[i][j] += ciphertext[i][k] * plaintext_inv[k][j];
+            }
+            key[i][j] = mod(key[i][j], 26);
+        }
+    }
+}
+
+// Function to find the modular inverse
+int mod_inverse(int a, int m) {
+    a = a % m;
+    for (int x = 1; x < m; x++) {
+        if ((a * x) % m == 1) {
+            return x;
+        }
+    }
+    return -1;
+}
+
+// Function to find the inverse of a matrix
+void matrix_inverse(int a[N][N], int inverse[N][N]) {
+    // This function assumes that the matrix is invertible
+    int det = 0;
+    for (int i = 0; i < N; i++) {
+        det = det + (a[0][i] * (a[1][(i+1)%N] * a[2][(i+2)%N] - a[1][(i+2)%N] * a[2][(i+1)%N]));
+    }
+    int det_inv = mod_inverse(det, 26);
+
+    int temp[N][N];
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < N; j++) {
+            temp[j][i] = ((a[(i+1)%N][(j+1)%N] * a[(i+2)%N][(j+2)%N]) - (a[(i+1)%N][(j+2)%N] * a[(i+2)%N][(j+1)%N]));
+            temp[j][i] = mod(temp[j][i] * det_inv, 26);
+            if (temp[j][i] < 0) {
+                temp[j][i] += 26;
+            }
+        }
+    }
+
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < N; j++) {
+            inverse[i][j] = temp[i][j];
+        }
+    }
+}
+
+// Function to compute a mod m
+int mod(int a, int m) {
+    int result = a % m;
+    return (result >= 0) ? result : result + m;
+}
