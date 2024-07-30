@@ -1,0 +1,84 @@
+#include <stdio.h>
+#include <string.h>
+#include <openssl/des.h>
+#include <openssl/rand.h>
+
+void handleErrors(void) {
+    fprintf(stderr, "An error occurred.\n");
+    exit(1);
+}
+
+// Function to pad data to the block size
+int padData(unsigned char *data, int data_len, int block_size) {
+    int padding_len = block_size - (data_len % block_size);
+    if (padding_len == 0) {
+        padding_len = block_size;
+    }
+    for (int i = 0; i < padding_len - 1; i++) {
+        data[data_len + i] = 0;
+    }
+    data[data_len + padding_len - 1] = 1;
+    return data_len + padding_len;
+}
+
+// Function to print data in hexadecimal format
+void print_hex(const char *title, const unsigned char *s, int len) {
+    printf("%s:", title);
+    for (int i = 0; i < len; ++i) {
+        if ((i % 16) == 0) printf("\n");
+        printf("%02x ", s[i]);
+    }
+    printf("\n");
+}
+
+int main(void) {
+    // DES key and initialization vector (8 bytes each)
+    DES_cblock key = {0x1A, 0x2B, 0x3C, 0x4D, 0x5E, 0x6F, 0x7A, 0x8B};
+    DES_cblock ivec;
+    DES_key_schedule schedule;
+
+    // Set the key schedule
+    if (DES_set_key_checked(&key, &schedule) != 0) {
+        handleErrors();
+    }
+
+    // Plaintext data
+    unsigned char plaintext[64] = "Hello, World! This is a test message.";
+    int plaintext_len = strlen((char *)plaintext);
+
+    // Pad the plaintext
+    int padded_len = padData(plaintext, plaintext_len, 8);
+    
+    unsigned char ciphertext[64] = {0};
+    unsigned char decryptedtext[64] = {0};
+
+    // ECB Mode
+    printf("ECB Mode\n");
+    DES_ecb_encrypt((DES_cblock *)plaintext, (DES_cblock *)ciphertext, &schedule, DES_ENCRYPT);
+    print_hex("Ciphertext", ciphertext, padded_len);
+
+    DES_ecb_encrypt((DES_cblock *)ciphertext, (DES_cblock *)decryptedtext, &schedule, DES_DECRYPT);
+    printf("Decrypted text: %s\n\n", decryptedtext);
+
+    // CBC Mode
+    printf("CBC Mode\n");
+    RAND_bytes(ivec, sizeof(ivec)); // Generate a random IV
+    DES_ncbc_encrypt(plaintext, ciphertext, padded_len, &schedule, &ivec, DES_ENCRYPT);
+    print_hex("Ciphertext", ciphertext, padded_len);
+
+    memcpy(ivec, (DES_cblock){0x8B, 0x7A, 0x6F, 0x5E, 0x4D, 0x3C, 0x2B, 0x1A}, sizeof(DES_cblock)); // Reset IV
+    DES_ncbc_encrypt(ciphertext, decryptedtext, padded_len, &schedule, &ivec, DES_DECRYPT);
+    printf("Decrypted text: %s\n\n", decryptedtext);
+
+    // CFB Mode
+    printf("CFB Mode\n");
+    RAND_bytes(ivec, sizeof(ivec)); // Generate a random IV
+    DES_cfb_encrypt(plaintext, ciphertext, 8, padded_len / 8, &schedule, &ivec, DES_ENCRYPT);
+    print_hex("Ciphertext", ciphertext, padded_len);
+
+    memcpy(ivec, (DES_cblock){0x8B, 0x7A, 0x6F, 0x5E, 0x4D, 0x3C, 0x2B, 0x1A}, sizeof(DES_cblock)); // Reset IV
+    DES_cfb_encrypt(ciphertext, decryptedtext, 8, padded_len / 8, &schedule, &ivec, DES_DECRYPT);
+    printf("Decrypted text: %s\n", decryptedtext);
+
+    return 0;
+}
