@@ -1,0 +1,63 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define ALPHABET_SIZE 26
+
+// Function prototypes
+void encrypt(char *plaintext, int *key, char *ciphertext);
+void decrypt(char *ciphertext, int *key, char *plaintext);
+void find_key(char *ciphertext, char *desired_plaintext, int *key);
+
+int main() {
+    char plaintext[] = "sendmoremoney";
+    int key[] = {9, 0, 1, 7, 23, 15, 21, 14, 11, 11, 2, 8, 9};
+    char ciphertext[100];
+
+    // Encrypt the plaintext
+    encrypt(plaintext, key, ciphertext);
+    printf("Ciphertext: %s\n", ciphertext);
+
+    // Decrypt to a different plaintext
+    char desired_plaintext[] = "cashnotneeded";
+    int found_key[strlen(desired_plaintext)];
+    find_key(ciphertext, desired_plaintext, found_key);
+
+    printf("Found key: ");
+    for (int i = 0; i < strlen(desired_plaintext); i++) {
+        printf("%d ", found_key[i]);
+    }
+    printf("\n");
+
+    char decrypted_text[100];
+    decrypt(ciphertext, found_key, decrypted_text);
+    printf("Decrypted text: %s\n", decrypted_text);
+
+    return 0;
+}
+
+// Function to encrypt plaintext using the one-time pad Vigenère cipher
+void encrypt(char *plaintext, int *key, char *ciphertext) {
+    int len = strlen(plaintext);
+    for (int i = 0; i < len; i++) {
+        ciphertext[i] = ((plaintext[i] - 'a' + key[i]) % ALPHABET_SIZE) + 'a';
+    }
+    ciphertext[len] = '\0'; // Null-terminate the string
+}
+
+// Function to decrypt ciphertext using the one-time pad Vigenère cipher
+void decrypt(char *ciphertext, int *key, char *plaintext) {
+    int len = strlen(ciphertext);
+    for (int i = 0; i < len; i++) {
+        plaintext[i] = ((ciphertext[i] - 'a' - key[i] + ALPHABET_SIZE) % ALPHABET_SIZE) + 'a';
+    }
+    plaintext[len] = '\0'; // Null-terminate the string
+}
+
+// Function to find the key for a desired plaintext and given ciphertext
+void find_key(char *ciphertext, char *desired_plaintext, int *key) {
+    int len = strlen(ciphertext);
+    for (int i = 0; i < len; i++) {
+        key[i] = ((ciphertext[i] - 'a') - (desired_plaintext[i] - 'a') + ALPHABET_SIZE) % ALPHABET_SIZE;
+    }
+}
