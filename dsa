@@ -1,0 +1,87 @@
+#include <stdio.h>
+#include <string.h>
+#include <openssl/dsa.h>
+#include <openssl/rsa.h>
+#include <openssl/pem.h>
+#include <openssl/err.h>
+#include <openssl/sha.h>
+
+void handleErrors(void) {
+    ERR_print_errors_fp(stderr);
+    abort();
+}
+
+void generate_dsa_signature(const char *message, DSA *dsa, unsigned char **sig, unsigned int *sig_len) {
+    SHA256_CTX sha256;
+    unsigned char hash[SHA256_DIGEST_LENGTH];
+
+    SHA256_Init(&sha256);
+    SHA256_Update(&sha256, message, strlen(message));
+    SHA256_Final(hash, &sha256);
+
+    *sig = malloc(DSA_size(dsa));
+    if (DSA_sign(0, hash, SHA256_DIGEST_LENGTH, *sig, sig_len, dsa) == 0) {
+        handleErrors();
+    }
+}
+
+void generate_rsa_signature(const char *message, RSA *rsa, unsigned char **sig, unsigned int *sig_len) {
+    SHA256_CTX sha256;
+    unsigned char hash[SHA256_DIGEST_LENGTH];
+
+    SHA256_Init(&sha256);
+    SHA256_Update(&sha256, message, strlen(message));
+    SHA256_Final(hash, &sha256);
+
+    *sig = malloc(RSA_size(rsa));
+    if (RSA_sign(NID_sha256, hash, SHA256_DIGEST_LENGTH, *sig, sig_len, rsa) == 0) {
+        handleErrors();
+    }
+}
+
+int main() {
+    const char *message = "Hello, world!";
+    DSA *dsa = DSA_new();
+    RSA *rsa = RSA_new();
+    unsigned char *dsa_sig1 = NULL, *dsa_sig2 = NULL, *rsa_sig1 = NULL, *rsa_sig2 = NULL;
+    unsigned int dsa_sig_len1, dsa_sig_len2, rsa_sig_len1, rsa_sig_len2;
+
+    // Generate DSA key
+    if (!DSA_generate_parameters_ex(dsa, 2048, NULL, 0, NULL, NULL, NULL)) handleErrors();
+    if (!DSA_generate_key(dsa)) handleErrors();
+
+    // Generate RSA key
+    BIGNUM *bn = BN_new();
+    BN_set_word(bn, RSA_F4);
+    if (!RSA_generate_key_ex(rsa, 2048, bn, NULL)) handleErrors();
+    BN_free(bn);
+
+    // Generate two DSA signatures
+    generate_dsa_signature(message, dsa, &dsa_sig1, &dsa_sig_len1);
+    generate_dsa_signature(message, dsa, &dsa_sig2, &dsa_sig_len2);
+
+    // Generate two RSA signatures
+    generate_rsa_signature(message, rsa, &rsa_sig1, &rsa_sig_len1);
+    generate_rsa_signature(message, rsa, &rsa_sig2, &rsa_sig_len2);
+
+    // Print signatures
+    printf("DSA Signature 1: ");
+    for (unsigned int i = 0; i < dsa_sig_len1; i++) printf("%02x", dsa_sig1[i]);
+    printf("\nDSA Signature 2: ");
+    for (unsigned int i = 0; i < dsa_sig_len2; i++) printf("%02x", dsa_sig2[i]);
+    printf("\nRSA Signature 1: ");
+    for (unsigned int i = 0; i < rsa_sig_len1; i++) printf("%02x", rsa_sig1[i]);
+    printf("\nRSA Signature 2: ");
+    for (unsigned int i = 0; i < rsa_sig_len2; i++) printf("%02x", rsa_sig2[i]);
+    printf("\n");
+
+    // Cleanup
+    DSA_free(dsa);
+    RSA_free(rsa);
+    free(dsa_sig1);
+    free(dsa_sig2);
+    free(rsa_sig1);
+    free(rsa_sig2);
+
+    return 0;
+}
